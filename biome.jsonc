@@ -1,0 +1,52 @@
+{
+  "$schema": "./node_modules/@biomejs/biome/configuration_schema.json",
+  "extends": ["ultracite/core", "ultracite/react", "ultracite/next"],
+  "plugins": [
+    "./biome/plugins/no-direct-expo-icons-import.grit",
+    "./biome/plugins/no-direct-expo-haptics-import.grit",
+    "./biome/plugins/use-locale-aware-moment-import.grit",
+    "./biome/plugins/no-direct-collapsible-tabs-import.grit"
+  ],
+  "files": {
+    "includes": [
+      "src/**/*.{ts,tsx,json}",
+      "*.{ts,css,json,js}",
+      "biome.jsonc",
+      "**/*.d.ts",
+      "targets/**/*",
+      "assets/**/*"
+    ]
+  },
+  "linter": {
+    "domains": {
+      "react": "recommended"
+    },
+    "rules": {
+      "suspicious": {
+        "noConsole": "off",
+        "noArrayIndexKey": "warn",
+        "noBitwiseOperators": "off"
+      },
+      "style": {
+        "noMagicNumbers": "off",
+        "noExportedImports": "off"
+      },
+      "correctness": {
+        "useExhaustiveDependencies": {
+          "level": "error",
+          "fix": "safe"
+        },
+        "useJsonImportAttributes": "off"
+      },
+      "complexity": {
+        "noExcessiveCognitiveComplexity": "off"
+      }
+    }
+  },
+  "javascript": {
+    "formatter": {
+      "quoteStyle": "double",
+      "trailingCommas": "all"
+    }
+  }
+}
