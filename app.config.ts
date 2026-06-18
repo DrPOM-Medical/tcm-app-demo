@@ -1,4 +1,6 @@
 import type { ExpoConfig } from "expo/config";
+import image from "expo-image/plugin";
+import imagePicker from "expo-image-picker/plugin";
 
 const config: ExpoConfig = {
   name: "tcm-app",
@@ -10,6 +12,8 @@ const config: ExpoConfig = {
   userInterfaceStyle: "automatic",
   ios: {
     icon: "./assets/expo.icon",
+    appleTeamId: "N4D2BT476X",
+    bundleIdentifier: "net.drpom.tcmdemo",
   },
   android: {
     adaptiveIcon: {
@@ -19,10 +23,6 @@ const config: ExpoConfig = {
       monochromeImage: "./assets/images/android-icon-monochrome.png",
     },
     predictiveBackGestureEnabled: false,
-  },
-  web: {
-    output: "static",
-    favicon: "./assets/images/favicon.png",
   },
   plugins: [
     "expo-router",
@@ -36,6 +36,11 @@ const config: ExpoConfig = {
         },
       },
     ],
+    image(),
+    imagePicker({
+      photosPermission:
+        "This app accesses your photos to set your custom profile picture.",
+    }),
   ],
   experiments: {
     typedRoutes: true,
