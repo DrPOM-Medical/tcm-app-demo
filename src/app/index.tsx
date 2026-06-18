@@ -15,13 +15,15 @@ import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
 
+const hostUri = Constants.expoConfig?.hostUri;
+
 function getApiBaseUrl() {
-  const hostUri = Constants.expoConfig?.hostUri;
+  const port = 8000;
   if (hostUri) {
     const [host] = hostUri.split(":");
-    return `http://${host}:8000`;
+    return `http://${host}:${port}`;
   }
-  return "http://localhost:8000";
+  return `http://localhost:${port}`;
 }
 
 type ImageAsset = {
@@ -32,6 +34,7 @@ type ImageAsset = {
 
 export default function HomeScreen() {
   const [imageAsset, setImageAsset] = useState<ImageAsset | null>(null);
+  const [result, setResult] = useState<string | null>(null);
   const [cameraPermission, requestPermission] = useCameraPermissions();
   const imageManipulatorCtx = useImageManipulator(imageAsset?.uri ?? "");
 
@@ -76,39 +79,49 @@ export default function HomeScreen() {
 
   const uploadImage = useCallback(
     async (asset: ImageAsset) => {
-      let imageUri = asset.uri;
-      let imageFileName = asset.fileName;
-      if (asset.mimeType === "image/heic") {
-        console.log("image is heic");
-        const renderedImage = await imageManipulatorCtx.renderAsync();
-        const convertedImage = await renderedImage.saveAsync({
-          format: SaveFormat.JPEG,
-        });
-        imageUri = convertedImage.uri;
-        if (imageFileName.endsWith(".heic")) {
-          imageFileName = imageFileName.replace(".heic", ".jpg");
+      try {
+        let imageUri = asset.uri;
+        let imageFileName = asset.fileName;
+        if (asset.mimeType === "image/heic") {
+          console.log("image is heic");
+          const renderedImage = await imageManipulatorCtx.renderAsync();
+          const convertedImage = await renderedImage.saveAsync({
+            format: SaveFormat.JPEG,
+          });
+          imageUri = convertedImage.uri;
+          if (imageFileName.endsWith(".heic")) {
+            imageFileName = imageFileName.replace(".heic", ".jpg");
+          }
         }
-      }
-      const file = new File(imageUri);
-      console.debug("image file name", file.name);
-      const base64 = await file.base64();
-      const binaryString = atob(base64);
-      const bytes = new Uint8Array(binaryString.length);
-      for (let i = 0; i < binaryString.length; i++) {
-        bytes[i] = binaryString.charCodeAt(i);
-      }
+        const file = new File(imageUri);
+        console.debug("image file name", file.name);
+        const base64 = await file.base64();
+        const binaryString = atob(base64);
+        const bytes = new Uint8Array(binaryString.length);
+        for (let i = 0; i < binaryString.length; i++) {
+          bytes[i] = binaryString.charCodeAt(i);
+        }
 
-      const formData = new FormData();
-      formData.append("file", file);
-      const response = await fetch(`${getApiBaseUrl()}/analyze-tongue`, {
-        method: "POST",
-        body: formData,
-      });
-      file.delete();
-      if (!response.ok) {
-        console.error("Failed to upload image", response.statusText);
+        const formData = new FormData();
+        formData.append("file", file);
+        const response = await fetch(`${getApiBaseUrl()}/analyze-tongue`, {
+          method: "POST",
+          body: formData,
+        });
+        file.delete();
+        if (!response.ok) {
+          console.error("Failed to upload image", response.statusText);
+        }
+        const result = await response.json();
+        const message = result.message;
+        if (typeof message !== "string") {
+          throw new Error("Unexpected response: ", result);
+        }
+        setResult(message);
+        console.log("Response: ", result);
+      } catch (error) {
+        console.error(error);
       }
-      console.log("Response: ", await response.json());
     },
     [imageManipulatorCtx],
   );
@@ -116,7 +129,7 @@ export default function HomeScreen() {
   return (
     <ThemedView style={styles.container}>
       <SafeAreaView style={styles.safeArea}>
-        <ThemedText type="title">Welcome to TCM</ThemedText>
+        <ThemedText type="title">TCM Platform</ThemedText>
         <Host matchContents>
           <Column alignment="center" spacing={16}>
             <Button onPress={takePhoto}>
@@ -141,6 +154,7 @@ export default function HomeScreen() {
             />
           </>
         )}
+        {result && <RNText>你的體質: {result}</RNText>}
       </SafeAreaView>
     </ThemedView>
   );
@@ -161,8 +175,8 @@ const styles = StyleSheet.create({
     maxWidth: MaxContentWidth,
   },
   image: {
-    width: 80,
-    height: 80,
+    width: 200,
+    height: 200,
   },
   uploadButton: {
     marginTop: Spacing.three,

@@ -1,0 +1,13 @@
+{
+  "build": {
+    "base": {
+      "pnpm": "10.10.0",
+      "node": "22.22.2"
+    },
+    "development": {
+      "extends": "base",
+      "developmentClient": true,
+      "distribution": "internal"
+    }
+  }
+}
