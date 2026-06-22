@@ -9,11 +9,17 @@ import {
   useCameraPermissions,
 } from "expo-image-picker";
 import { useCallback, useState } from "react";
-import { Button as RNButton, Text as RNText, StyleSheet } from "react-native";
+import {
+  Button as RNButton,
+  Text as RNText,
+  ScrollView,
+  StyleSheet,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { ThemedText } from "@/components/themed-text";
 import { ThemedView } from "@/components/themed-view";
 import { BottomTabInset, MaxContentWidth, Spacing } from "@/constants/theme";
+import { tongueCatagories, tongueCatagoriesMap } from "@/constants/tongue";
 
 const hostUri = Constants.expoConfig?.hostUri;
 
@@ -117,8 +123,22 @@ export default function HomeScreen() {
         if (typeof message !== "string") {
           throw new Error("Unexpected response: ", result);
         }
-        setResult(message);
-        console.log("Response: ", result);
+        const object = JSON.parse(message);
+        console.debug("message: ", object.predictions);
+        const predictions = object.predictions;
+        const res = tongueCatagories.map((category) => {
+          const prediction = predictions.find((o) => o.class_name === category);
+          return {
+            name: tongueCatagoriesMap[
+              category as keyof typeof tongueCatagoriesMap
+            ],
+            value: prediction?.probability ?? 0,
+          };
+        });
+        console.debug("result: ", res);
+        setResult(res.map((o) => `${o.name}: ${o.value}\n`).join("\n"));
+
+        // setResult(JSON.stringify(res));
       } catch (error) {
         console.error(error);
       }
@@ -154,7 +174,11 @@ export default function HomeScreen() {
             />
           </>
         )}
-        {result && <RNText>你的體質: {result}</RNText>}
+        {result && (
+          <ScrollView>
+            <RNText>結果: {result}</RNText>
+          </ScrollView>
+        )}
       </SafeAreaView>
     </ThemedView>
   );
